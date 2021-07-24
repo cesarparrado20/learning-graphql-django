@@ -31,6 +31,7 @@ class AnswerType(DjangoObjectType):
 class Query(graphene.ObjectType):
     all_questions = graphene.Field(QuestionType, id=graphene.Int())
     all_answers = graphene.List(AnswerType, id=graphene.Int())
+
     # alternative to list django models: DjangoListField(AnswerType)
 
     # in the notes this is step 7
@@ -43,4 +44,55 @@ class Query(graphene.ObjectType):
         return Answer.objects.filter(question=id)
 
 
-schema = graphene.Schema(query=Query)
+# in the notes this is step 8
+
+# in the notes this is step 8.1
+class AddCategoryMutation(graphene.Mutation):
+    class Arguments:
+        name = graphene.String(required=True)
+
+    category = graphene.Field(CategoryType)
+
+    @classmethod
+    def mutate(cls, root, info, name):
+        category = Category(name=name)
+        category.save()
+        return AddCategoryMutation(category=category)
+
+
+class UpdateCategoryMutation(graphene.Mutation):
+    class Arguments:
+        id = graphene.ID()
+        name = graphene.String(required=True)
+
+    category = graphene.Field(CategoryType)
+
+    @classmethod
+    def mutate(cls, root, info, id, name):
+        category = Category.objects.get(id=id)
+        category.name = name
+        category.save()
+        return UpdateCategoryMutation(category=category)
+
+
+class DeleteCategoryMutation(graphene.Mutation):
+    class Arguments:
+        id = graphene.ID()
+
+    category = graphene.Field(CategoryType)
+
+    @classmethod
+    def mutate(cls, root, info, id):
+        category = Category.objects.get(id=id)
+        category.delete()
+        return None
+
+
+# in the notes this is step 8.2
+class Mutation(graphene.ObjectType):
+    add_category = AddCategoryMutation.Field()
+    update_category = UpdateCategoryMutation.Field()
+    delete_category = DeleteCategoryMutation.Field()
+
+
+schema = graphene.Schema(query=Query, mutation=Mutation)

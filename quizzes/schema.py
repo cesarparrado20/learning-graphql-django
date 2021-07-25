@@ -19,7 +19,7 @@ class QuizzesNode(DjangoObjectType):
         filter_fields = {
             'title': ['exact', 'icontains', 'istartswith'],
         }
-        fields = ('id', 'title', 'category', 'quiz')
+        fields = ('id', 'title', 'category')
 
 
 class QuestionType(DjangoObjectType):
@@ -97,11 +97,31 @@ class DeleteCategoryMutation(graphene.Mutation):
         return None
 
 
+# in the notes this is step 10
+class AddQuizzesMutation(graphene.relay.ClientIDMutation):
+    class Input:
+        title = graphene.String(required=True)
+        category = graphene.Int(required=True)
+
+    quiz = graphene.Field(QuizzesNode)
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, **input):
+        print(input)
+        quiz = Quizzes(
+            title=input.get('title'),
+            category_id=input.get('category')
+        )
+        quiz.save()
+        return AddQuizzesMutation(quiz=quiz)
+
+
 # in the notes this is step 8.2
 class Mutation(graphene.ObjectType):
     add_category = AddCategoryMutation.Field()
     update_category = UpdateCategoryMutation.Field()
     delete_category = DeleteCategoryMutation.Field()
+    add_quiz = AddQuizzesMutation.Field()
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)

@@ -1,5 +1,6 @@
 import graphene
 from graphene_django import DjangoObjectType, DjangoListField
+from graphene_django.filter import DjangoFilterConnectionField
 
 from .models import Quizzes, Category, Question, Answer
 
@@ -10,9 +11,14 @@ class CategoryType(DjangoObjectType):
         fields = ('id', 'name')
 
 
-class QuizzesType(DjangoObjectType):
+# in the notes this is step 9.1
+class QuizzesNode(DjangoObjectType):
     class Meta:
         model = Quizzes
+        interfaces = (graphene.relay.Node,)
+        filter_fields = {
+            'title': ['exact', 'icontains', 'istartswith'],
+        }
         fields = ('id', 'title', 'category', 'quiz')
 
 
@@ -30,9 +36,12 @@ class AnswerType(DjangoObjectType):
 
 class Query(graphene.ObjectType):
     all_questions = graphene.Field(QuestionType, id=graphene.Int())
-    all_answers = graphene.List(AnswerType, id=graphene.Int())
-
     # alternative to list django models: DjangoListField(AnswerType)
+    all_answers = graphene.List(AnswerType, id=graphene.Int())
+    # Queries with Relay
+    # in the notes this is step 9
+    quiz = graphene.relay.Node.Field(QuizzesNode)
+    all_quizzes = DjangoFilterConnectionField(QuizzesNode)
 
     # in the notes this is step 7
     @staticmethod
